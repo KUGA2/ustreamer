@@ -115,6 +115,7 @@ typedef struct {
 	evutil_socket_t		unix_fd;
 	char				*auth_token;
 	struct event		*refresh;
+	struct event		*snapshot;
 	stream_s			*stream;
 	exposed_s			*exposed;
 	stream_client_s		*stream_clients;

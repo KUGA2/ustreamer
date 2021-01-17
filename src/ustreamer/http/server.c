@@ -387,15 +387,42 @@ static void _http_callback_state(struct evhttp_request *request, void *v_server)
 	evbuffer_free(buf);
 }
 
+typedef struct {
+	struct evhttp_request *request;
+	server_s *server;
+} snapshot_s;
+
+static void _http_callback_snapshot_pt2(UNUSED int fd, UNUSED short what, snapshot_s *arg);
 static void _http_callback_snapshot(struct evhttp_request *request, void *v_server) {
-
+#	ifdef WITH_GPIO
 	gpio_set_has_http_clients(true);
-	server_s *server = (server_s *)v_server;
+#	endif
+	gpio_set_has_http_clients(true);
+	server_s *server = (server_s *)(v_server);
+	snapshot_s *snapshot_arg;
+	snapshot_arg = (snapshot_s*)malloc(sizeof(snapshot_s));
+	snapshot_arg->request = request;
+	snapshot_arg->server = server;
+	const short ONESHOT = 0;
+	assert((RUN(refresh) = event_new(RUN(base), -1, ONESHOT, _http_callback_snapshot_pt2, snapshot_arg)));
+	
+	struct timeval refresh_interval;
 
-	usleep(100000);
-	while (!(atomic_load(&VID(updated)))) ;
-	while(false == _expose_new_frame(server)) ;
+	refresh_interval.tv_sec = 0;
+	refresh_interval.tv_usec = 0;
+#	ifdef WITH_GPIO
+	refresh_interval.tv_usec = 100 * 1000;
+#	endif
+	
+	assert(!event_add(RUN(refresh), &refresh_interval));
+}
+
+static void _http_callback_snapshot_pt2(UNUSED int fd, UNUSED short what, snapshot_s *arg) {
+	server_s *server = (arg->server);
+	struct evhttp_request *request = arg->request;
+#	ifdef WITH_GPIO
 	gpio_set_has_http_clients(false);
+#	endif
 
 	PREPROCESS_REQUEST;
 
