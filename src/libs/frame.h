@@ -75,6 +75,16 @@ unsigned frame_get_padding(const frame_s *frame);
 
 const char *fourcc_to_string(unsigned format, char *buf, size_t size);
 
-inline bool is_jpeg(unsigned format) {
+#ifdef NDEBUG
+inline
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+static
+#endif
+bool is_jpeg(unsigned format) {
 	return (format == V4L2_PIX_FMT_JPEG || format == V4L2_PIX_FMT_MJPEG);
 }
+#ifndef NDEBUG
+#pragma GCC diagnostic pop
+#endif
