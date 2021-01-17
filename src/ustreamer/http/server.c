@@ -388,7 +388,14 @@ static void _http_callback_state(struct evhttp_request *request, void *v_server)
 }
 
 static void _http_callback_snapshot(struct evhttp_request *request, void *v_server) {
+
+	gpio_set_has_http_clients(true);
 	server_s *server = (server_s *)v_server;
+
+	usleep(100000);
+	while (!(atomic_load(&VID(updated)))) ;
+	while(false == _expose_new_frame(server)) ;
+	gpio_set_has_http_clients(false);
 
 	PREPROCESS_REQUEST;
 
